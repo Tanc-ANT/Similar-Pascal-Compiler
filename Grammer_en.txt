@@ -1,0 +1,79 @@
+program= program_heading block '.' .
+  identifier_list= NAME { ',' NAME } .
+  program_heading= PROGRAM NAME '(' identifier_list ')' ';' .
+  block= declaration_part statement_part .
+    constant= [ '+' | '-' ] ( CONSTANT_NAME | NUMBER ) | STRING .
+    type= simple_type | structured_type | TYPE_NAME .
+      simple_type= constant '..' constant.
+      structured_type= array_type | record_type .
+        array_type= ARRAY '[' index_type { ',' index_type } ']' OF
+            element_type .
+          index_type= simple_type .
+          element_type= type .
+        record_type= RECORD field_list END .
+          field_list= record_section { ';' record_section } .
+            record_section= identifier_list ':' type .
+    declaration_part= [ constant_definition_part ]
+        [ type_definition_part ] [ variable_declaration_part ]
+        procedure_and_function_declaration_part .
+      constant_definition_part= CONST constant_definition ';'
+          { constant_definition ';' } .
+        constant_definition= NAME '=' constant .
+      type_definition_part= TYPE type_definition ';' { type_definition ';' } .
+        type_definition= NAME '=' type .
+      variable_declaration_part= VAR variable_declaration ';'
+          { variable_declaration ';' } .
+        variable_declaration= identifier_list ':' type .
+      procedure_and_function_declaration_part=
+          { ( procedure_declaration | function_declaration ) ';' } .
+        formal_parameter_list= '(' formal_parameter_section
+            { ';' formal_parameter_section } ')' .
+          formal_parameter_section= [ VAR ]identifier_list ':' parameter_type .
+            parameter_type= TYPE_NAME .
+        procedure_heading= PROCEDURE NAME [ formal_parameter_list ] .
+        function_heading= FUNCTION NAME [ formal_parameter_list ] ':' result_type .
+          result_type= TYPE_NAME .
+        procedure_declaration= procedure_heading ';' block.
+        function_declaration= function_heading ';'  block  .
+    statement_part= BEGIN statement_sequence END .
+      statement_sequence= statement { ';' statement } .
+        expression= F .
+        expression_list= expression { ',' expression } .
+        variable_access= ACCESS_NAME { end_access } .
+          end_access= { array_access | record_access | function_parameters } .
+            array_access= '[' expression_list ']' .
+            record_access= '.' variable_access .
+            function_parameters= '(' [ expression_list ] ')' .
+        actual_parameter_list= '(' expression { ',' expression } ')' .
+        expression= simple_expression [ relational_operator simple_expression ] .
+          relational_operator= '=' | '<>' | '<' | '<=' | '>' | '>=' .
+          simple_expression= [ '+' | '-' ] term { addition_operator term } .
+            addition_operator= '+' | '-' | OR .
+            term= factor { multiplication_operator factor } .
+              multiplication_operator= '*' | '/' | DIV | MOD | AND .
+              factor= NUMBER | STRING | CONSTANT_NAME
+                  | variable_access | function_designator
+                  | '(' expression ')' | NOT factor .
+                function_designator= FUNCTION_NAME [ actual_parameter_list ] .
+        statement= ( simple_statement | structured_statement ) .
+          simple_statement= [ assignment_statement | procedure_statement ] .
+            assignment_statement= ( variable_access | FUNCTION_NAME ) ':=' expression .
+            procedure_statement= PROCEDURE_NAME [ actual_parameter_list ] .
+          structured_statement= compound_statement | repetitive_statement
+              | conditional_statement .
+            compound_statement= BEGIN statement_sequence END .
+            repetitive_statement= while_statement | repeat_statement
+                | for_statement .
+              while_statement= WHILE expression DO statement .
+              repeat_statement= REPEAT statement_sequence UNTIL expression .
+              for_statement= FOR VARIABLE_NAME ':=' initial_expression
+                  ( TO | DOWNTO ) final_expression DO statement .
+                initial_expression= expression .
+                final_expression= expression .
+            conditional_statement= if_statement | case_statement .
+              if_statement= IF expression THEN statement [ ELSE statement ] .
+              case_statement= CASE expression OF
+                  case_element { ';' case_element } [ ';' ] END .
+                case_element= case_label_list ':' statement .
+                  case_label_list= constant { ',' constant } .
+.
